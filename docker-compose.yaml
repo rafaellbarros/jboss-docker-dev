@@ -1,0 +1,57 @@
+services:
+  wildfly:
+    build: ./wildfly
+    ports:
+      - "8080:8080"
+      - "9990:9990"
+      - "8787:8787"
+    volumes:
+      - ./wildfly/standalone.xml:/opt/jboss/wildfly/standalone/configuration/standalone.xml
+      - ./src:/opt/jboss/wildfly/standalone/deployments
+    environment:
+      - WILDFLY_USER=admin
+      - WILDFLY_PASSWORD=admin
+    depends_on:
+      db_mysql:
+        condition: service_healthy
+      db_postgres:
+        condition: service_healthy
+
+  db_mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: jbossuser
+      MYSQL_PASSWORD: jbosspass
+      MYSQL_DATABASE: jbossdb
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  db_postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: jbossuser
+      POSTGRES_PASSWORD: jbosspass
+      POSTGRES_DB: jbossdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jbossuser -d jbossdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+volumes:
+  mysql_data:
+  postgres_data:

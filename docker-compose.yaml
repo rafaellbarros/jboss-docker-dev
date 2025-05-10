@@ -5,9 +5,11 @@ services:
       - "8080:8080"
       - "9990:9990"
       - "8787:8787"
+    networks:
+      - wildfly-network
     volumes:
-      - ./wildfly/standalone.xml:/opt/jboss/wildfly/standalone/configuration/standalone.xml
-      - ./src:/opt/jboss/wildfly/standalone/deployments
+      - ./wildfly/standalone.xml:/opt/jboss/wildfly/standalone/configuration/standalone.xml:Z,rw
+      - ./wildfly/deployments:/opt/jboss/wildfly/standalone/deployments:Z
     environment:
       - WILDFLY_USER=admin
       - WILDFLY_PASSWORD=admin
@@ -16,6 +18,12 @@ services:
         condition: service_healthy
       db_postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
 
   db_mysql:
     image: mysql:8.0
@@ -26,6 +34,8 @@ services:
       MYSQL_DATABASE: jbossdb
     ports:
       - "3306:3306"
+    networks:
+      - wildfly-network
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
@@ -43,6 +53,8 @@ services:
       POSTGRES_DB: jbossdb
     ports:
       - "5432:5432"
+    networks:
+      - wildfly-network
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -55,3 +67,8 @@ services:
 volumes:
   mysql_data:
   postgres_data:
+
+networks:
+  wildfly-network:
+    driver: bridge
+    name: wildfly-network

@@ -28,14 +28,14 @@ public class ProdutoResource {
     @GET
     @Path("/{id}")
     public Response buscarPorId(@PathParam("id") Long id) {
-        Produto produto = service.buscarPorId(id);
+        var produto = service.buscarPorId(id);
         return Response.ok(produto).build();
     }
 
 
     @POST
     public Response criar(Produto produto) {
-        Produto produtoSalvo = service.salvar(produto);
+        var produtoSalvo = service.salvar(produto);
         return Response.created(URI.create("/produtos/" + produtoSalvo.getId())).entity(produtoSalvo).build();
     }
 
@@ -43,8 +43,8 @@ public class ProdutoResource {
     @Path("/{id}")
     public Response atualizar(@PathParam("id") Long id, Produto produto) {
         produto.setId(id);
-        Produto salvared = service.salvar(produto);
-        return Response.ok(salvared).build();
+        var produtoAtualizado = service.salvar(produto);
+        return Response.ok(produtoAtualizado).build();
     }
 
     @DELETE

@@ -29,17 +29,6 @@ public class ProdutoService {
         return repository.salvar(produto);
     }
 
-
-    public Produto atualizar(Produto produto) {
-        Objects.requireNonNull(produto, "Produto não pode ser nulo");
-        Produto existente = this.buscarPorId(produto.getId());
-        existente.setId(produto.getId());
-        existente.setNome(produto.getNome());
-        existente.setPreco(produto.getPreco());
-        return this.salvar(existente);
-
-    }
-
     public void remover(Long id) {
         Produto produto = buscarPorId(id);
         repository.remover(produto.getId());

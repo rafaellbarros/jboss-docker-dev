@@ -1,6 +1,5 @@
 package com.github.rafaellbarros.exception.mapper;
 
-
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Request;

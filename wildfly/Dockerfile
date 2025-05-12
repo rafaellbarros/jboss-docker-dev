@@ -1,11 +1,6 @@
-FROM docker.io/jboss/wildfly:25.0.0.Final
+FROM jboss/wildfly:25.0.0.Final
 
 USER root
-
-# Instalar dependências úteis para troubleshooting
-RUN yum install -y procps-ng vim && \
-    yum clean all && \
-    rm -rf /var/cache/yum
 
 # Configurar diretórios e permissões
 RUN mkdir -p /opt/jboss/wildfly/standalone/deployments && \
@@ -18,6 +13,9 @@ RUN /opt/jboss/wildfly/bin/add-user.sh admin admin --silent
 
 # Copiar módulos do driver JDBC
 COPY --chown=jboss:jboss modules/ /opt/jboss/wildfly/modules/
+
+# Copiar o arquivo standalone.xml (evita erro de "Device or resource busy")
+COPY --chown=jboss:jboss standalone.xml /opt/jboss/wildfly/standalone/configuration/
 
 # Configurar variáveis de ambiente para depuração
 ENV JAVA_OPTS="-agentlib:jdwp=transport=dt_socket,address=*:8787,server=y,suspend=n -Xms256m -Xmx1024m -XX:MetaspaceSize=96M -XX:MaxMetaspaceSize=256m -Djava.net.preferIPv4Stack=true -Djboss.management.native.management-interface.skip-persistence=true"

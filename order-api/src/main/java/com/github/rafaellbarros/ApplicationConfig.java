@@ -1,8 +1,6 @@
 package com.github.rafaellbarros;
 
 
-import com.github.rafaellbarros.resource.ProdutoResource;
-import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Contact;
 import io.swagger.v3.oas.annotations.info.Info;
@@ -11,8 +9,7 @@ import io.swagger.v3.oas.annotations.servers.Server;
 
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;
-import java.util.HashSet;
-import java.util.Set;
+
 
 @OpenAPIDefinition(
         info = @Info(
@@ -39,18 +36,5 @@ import java.util.Set;
 @ApplicationPath("/api")
 public class ApplicationConfig extends Application {
 
-    @Override
-    public Set<Class<?>> getClasses() {
-        Set<Class<?>> resources = new HashSet<>();
-
-        // Adicione explicitamente suas classes de recurso
-        resources.add(ProdutoResource.class);
-        // resources.add(OutraClasseDeRecurso.class);
-
-        // Adicione o OpenApiResource por último
-        resources.add(OpenApiResource.class);
-
-        return resources;
-    }
 
 }

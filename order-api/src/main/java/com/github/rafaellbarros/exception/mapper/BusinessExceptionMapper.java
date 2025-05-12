@@ -1,7 +1,10 @@
 package com.github.rafaellbarros.exception.mapper;
 
 
-import com.github.rafaellbarros.exception.NotFoundException;
+
+
+
+import com.github.rafaellbarros.exception.BusinessException;
 
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Request;
@@ -12,7 +15,7 @@ import javax.ws.rs.ext.Provider;
 
 
 @Provider
-public class NotFoundExceptionMapper implements ExceptionMapper<NotFoundException> {
+public class BusinessExceptionMapper implements ExceptionMapper<BusinessException> {
 
     @Context  // Injeta informações da URI da requisição
     private UriInfo uriInfo;
@@ -22,7 +25,7 @@ public class NotFoundExceptionMapper implements ExceptionMapper<NotFoundExceptio
     private Request request;
 
     @Override
-    public Response toResponse(NotFoundException exception) {
+    public Response toResponse(BusinessException exception) {
         // Obtém o caminho da requisição que causou o erro
         String path = uriInfo.getPath();
 

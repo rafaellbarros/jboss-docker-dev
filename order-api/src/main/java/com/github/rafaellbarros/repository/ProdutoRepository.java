@@ -2,13 +2,13 @@ package com.github.rafaellbarros.repository;
 
 import com.github.rafaellbarros.model.Produto;
 
-import javax.ejb.Stateless;
+import javax.enterprise.context.ApplicationScoped;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.List;
 import java.util.Optional;
 
-@Stateless
+@ApplicationScoped
 public class ProdutoRepository {
     
     @PersistenceContext

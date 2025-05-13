@@ -1,11 +1,13 @@
 package com.github.rafaellbarros.service;
 
+import com.github.rafaellbarros.dto.PageResposeDTO;
 import com.github.rafaellbarros.dto.ProdutoRequestDTO;
 import com.github.rafaellbarros.dto.ProdutoResponseDTO;
 import com.github.rafaellbarros.exception.BusinessNotException;
-import com.github.rafaellbarros.exception.mapper.BusinessNotExceptionMapper;
 import com.github.rafaellbarros.mapper.ProdutoMapper;
 import com.github.rafaellbarros.model.Produto;
+import com.github.rafaellbarros.page.Page;
+import com.github.rafaellbarros.page.Pageable;
 import com.github.rafaellbarros.repository.ProdutoRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +34,21 @@ public class ProdutoService {
         LOG.info("listarTodos : {}", produtos.size());
         return mapper.toDTOList(produtos);
     }
+
+    public PageResposeDTO<ProdutoResponseDTO> listarTodosPaginado(Pageable pageable) {
+        Page<Produto> paginacaoProdutos = repository.listarTodosPaginado(pageable);
+        LOG.info("listarTodosPaginado : {}", paginacaoProdutos.getTotalElementos());
+        List<ProdutoResponseDTO> dtos = mapper.toDTOList(paginacaoProdutos.getContent());
+
+        return new PageResposeDTO<>(
+                dtos,
+                paginacaoProdutos.getCurrentPage(),
+                paginacaoProdutos.getPageSize(),
+                paginacaoProdutos.getTotalElementos(),
+                paginacaoProdutos.getTotalPages()
+        );
+    }
+
 
     public ProdutoResponseDTO buscarPorId(final Long id) {
         LOG.info("buscarPorId : {}", id);

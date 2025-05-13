@@ -1,7 +1,10 @@
 package com.github.rafaellbarros.resource;
 
+import com.github.rafaellbarros.dto.PageResposeDTO;
 import com.github.rafaellbarros.dto.ProdutoRequestDTO;
 import com.github.rafaellbarros.dto.ProdutoResponseDTO;
+import com.github.rafaellbarros.page.Pageable;
+import com.github.rafaellbarros.page.SortDirection;
 import com.github.rafaellbarros.response.StandardResponses;
 import com.github.rafaellbarros.service.ProdutoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,6 +33,32 @@ public class ProdutoResource {
 
     @Inject
     private ProdutoService service;
+
+    @GET
+    @Path("/pages")
+    public Response listarPaginado(
+            @QueryParam("page") @DefaultValue("1") int page,
+            @QueryParam("size") @DefaultValue("10") int size,
+            @QueryParam("ordination") String ordination,
+            @QueryParam("direction") @DefaultValue("ASC") String direction) {
+
+        try {
+            Pageable parametros = new Pageable(
+                    page,
+                    size,
+                    ordination,
+                    SortDirection.valueOf(direction.toUpperCase())
+            );
+
+            PageResposeDTO<ProdutoResponseDTO> resultado = service.listarTodosPaginado(parametros);
+            return Response.ok(resultado).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("Direção de ordenação inválida. Use ASC ou DESC")
+                    .build();
+        }
+    }
+
 
 
     @GET

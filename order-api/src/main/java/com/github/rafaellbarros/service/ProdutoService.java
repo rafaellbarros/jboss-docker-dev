@@ -1,6 +1,7 @@
 package com.github.rafaellbarros.service;
 
 import com.github.rafaellbarros.dto.PageResposeDTO;
+import com.github.rafaellbarros.dto.ProdutoFiltroDTO;
 import com.github.rafaellbarros.dto.ProdutoRequestDTO;
 import com.github.rafaellbarros.dto.ProdutoResponseDTO;
 import com.github.rafaellbarros.exception.BusinessNotException;
@@ -36,19 +37,32 @@ public class ProdutoService {
     }
 
     public PageResposeDTO<ProdutoResponseDTO> listarTodosPaginado(Pageable pageable) {
-        Page<Produto> paginacaoProdutos = repository.listarTodosPaginado(pageable);
-        LOG.info("listarTodosPaginado : {}", paginacaoProdutos.getTotalElementos());
-        List<ProdutoResponseDTO> dtos = mapper.toDTOList(paginacaoProdutos.getContent());
+        Page<Produto> page = repository.listarTodosPaginado(pageable);
+        LOG.info("listarTodosPaginado : {}", page.getTotalElements());
+        List<ProdutoResponseDTO> dtos = mapper.toDTOList(page.getContent());
 
         return new PageResposeDTO<>(
                 dtos,
-                paginacaoProdutos.getCurrentPage(),
-                paginacaoProdutos.getPageSize(),
-                paginacaoProdutos.getTotalElementos(),
-                paginacaoProdutos.getTotalPages()
+                page.getCurrentPage(),
+                page.getPageSize(),
+                page.getTotalElements(),
+                page.getTotalPages()
         );
     }
 
+    public PageResposeDTO<ProdutoResponseDTO> pesquisarComFiltros(ProdutoFiltroDTO filtro, Pageable pageable) {
+        Page<Produto> page = repository.pesquisarComFiltros(filtro, pageable);
+        LOG.info("pesquisarComFiltros : encontrados {} produtos", page.getTotalElements());
+        List<ProdutoResponseDTO> dtos = mapper.toDTOList(page.getContent());
+
+        return new PageResposeDTO<>(
+                dtos,
+                page.getCurrentPage(),
+                page.getPageSize(),
+                page.getTotalElements(),
+                page.getTotalPages()
+        );
+    }
 
     public ProdutoResponseDTO buscarPorId(final Long id) {
         LOG.info("buscarPorId : {}", id);

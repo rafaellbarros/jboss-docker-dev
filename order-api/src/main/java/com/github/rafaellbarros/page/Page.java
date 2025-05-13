@@ -9,40 +9,18 @@ public class Page<T> {
     private long totalElements;
     private int totalPages;
 
-    public Page(List<T> content, int currentPage, int pageSize, long totalPages) {
+    public Page(List<T> content, int currentPage, int pageSize, long totalElements) {
         this.content = content;
         this.currentPage = currentPage;
         this.pageSize = pageSize;
         this.totalElements = totalElements;
-        this.totalPages = (int) Math.ceil((double) totalElements / currentPage);
+        this.totalPages = (int) Math.ceil((double) totalElements / pageSize);
     }
 
-    // Getters
-    public List<T> getContent() {
-        return content;
-    }
 
-    public int getCurrentPage() {
-        return currentPage;
-    }
-
-    public int getPageSize() {
-        return pageSize;
-    }
-
-    public long getTotalElementos() {
-        return totalElements;
-    }
-
-    public int getTotalPages() {
-        return totalPages;
-    }
-
-    public boolean next() {
-        return currentPage < totalPages;
-    }
-
-    public boolean previous() {
-        return currentPage > 1;
-    }
+    public List<T> getContent() { return content; }
+    public int getCurrentPage() { return currentPage; }
+    public int getPageSize() { return pageSize; }
+    public long getTotalElements() { return totalElements; }
+    public int getTotalPages() { return totalPages; }
 }

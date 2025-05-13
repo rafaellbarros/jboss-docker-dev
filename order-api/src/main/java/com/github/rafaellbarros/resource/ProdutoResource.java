@@ -1,6 +1,7 @@
 package com.github.rafaellbarros.resource;
 
 import com.github.rafaellbarros.dto.PageResposeDTO;
+import com.github.rafaellbarros.dto.ProdutoFiltroDTO;
 import com.github.rafaellbarros.dto.ProdutoRequestDTO;
 import com.github.rafaellbarros.dto.ProdutoResponseDTO;
 import com.github.rafaellbarros.page.Pageable;
@@ -20,6 +21,7 @@ import javax.validation.Valid;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.math.BigDecimal;
 import java.net.URI;
 import java.util.List;
 
@@ -34,27 +36,89 @@ public class ProdutoResource {
     @Inject
     private ProdutoService service;
 
+
     @GET
     @Path("/pages")
+    @Operation(summary = "Listar produtos paginados",
+            description = "Retorna uma lista paginada de produtos")
     public Response listarPaginado(
-            @QueryParam("page") @DefaultValue("1") int page,
+            @Parameter(description = "Número da página (0-based)", example = "0")
+            @QueryParam("page") @DefaultValue("0") int page,
+
+            @Parameter(description = "Quantidade de itens por página", example = "10")
             @QueryParam("size") @DefaultValue("10") int size,
-            @QueryParam("ordination") String ordination,
+
+            @Parameter(description = "Campo para ordenação", example = "nome")
+            @QueryParam("sort") String ordination,
+
+            @Parameter(description = "Direção da ordenação (ASC ou DESC)", example = "ASC")
             @QueryParam("direction") @DefaultValue("ASC") String direction) {
 
         try {
-            Pageable parametros = new Pageable(
-                    page,
-                    size,
-                    ordination,
-                    SortDirection.valueOf(direction.toUpperCase())
-            );
+            Pageable pageable = Pageable.builder()
+                    .page(page)
+                    .size(size)
+                    .ordination(ordination)
+                    .direction(SortDirection.valueOf(direction.toUpperCase()))
+                    .build();
 
-            PageResposeDTO<ProdutoResponseDTO> resultado = service.listarTodosPaginado(parametros);
+            PageResposeDTO<ProdutoResponseDTO> resultado = service.listarTodosPaginado(pageable);
             return Response.ok(resultado).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity("Direção de ordenação inválida. Use ASC ou DESC")
+                    .build();
+        }
+    }
+
+    @GET
+    @Path("/pesquisar")
+    @Operation(summary = "Pesquisar produtos com filtros",
+            description = "Retorna uma lista paginada de produtos filtrados")
+    public Response pesquisar(
+            @Parameter(description = "Nome do produto (parcial)", example = "notebook")
+            @QueryParam("nome") String nome,
+
+            @Parameter(description = "Descrição do produto (parcial)", example = "gamer")
+            @QueryParam("descricao") String descricao,
+
+            @Parameter(description = "Preço mínimo", example = "1000")
+            @QueryParam("precoMin") BigDecimal precoMin,
+
+            @Parameter(description = "Preço máximo", example = "5000")
+            @QueryParam("precoMax") BigDecimal precoMax,
+
+            @Parameter(description = "Número da página (0-based)", example = "0")
+            @QueryParam("page") @DefaultValue("0") int page,
+
+            @Parameter(description = "Quantidade de itens por página", example = "10")
+            @QueryParam("size") @DefaultValue("10") int size,
+
+            @Parameter(description = "Campo para ordenação", example = "preco")
+            @QueryParam("sort") String ordination,
+
+            @Parameter(description = "Direção da ordenação (ASC ou DESC)", example = "ASC")
+            @QueryParam("direction") @DefaultValue("ASC") String direction) {
+
+        try {
+            ProdutoFiltroDTO filtro = new ProdutoFiltroDTO();
+            filtro.setNome(nome);
+            filtro.setDescricao(descricao);
+            filtro.setPrecoMin(precoMin);
+            filtro.setPrecoMax(precoMax);
+
+            Pageable pageable = Pageable.builder()
+                    .page(page)
+                    .size(size)
+                    .ordination(ordination)
+                    .direction(SortDirection.valueOf(direction.toUpperCase()))
+                    .build();
+
+            PageResposeDTO<ProdutoResponseDTO> resultado = service.pesquisarComFiltros(filtro, pageable);
+            return Response.ok(resultado).build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("Parâmetros inválidos: " + e.getMessage())
                     .build();
         }
     }

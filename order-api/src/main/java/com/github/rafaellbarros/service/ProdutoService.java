@@ -1,8 +1,14 @@
 package com.github.rafaellbarros.service;
 
+import com.github.rafaellbarros.dto.ProdutoRequestDTO;
+import com.github.rafaellbarros.dto.ProdutoResponseDTO;
 import com.github.rafaellbarros.exception.BusinessNotException;
+import com.github.rafaellbarros.exception.mapper.BusinessNotExceptionMapper;
+import com.github.rafaellbarros.mapper.ProdutoMapper;
 import com.github.rafaellbarros.model.Produto;
 import com.github.rafaellbarros.repository.ProdutoRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -13,27 +19,53 @@ import java.util.Objects;
 @ApplicationScoped
 public class ProdutoService {
 
+    private static final Logger LOG = LoggerFactory.getLogger(ProdutoService.class);
+
     @Inject
     private ProdutoRepository repository;
 
-    public List<Produto> listarTodos() {
-        return repository.listarTodos();
+    @Inject
+    ProdutoMapper mapper;
+
+    public List<ProdutoResponseDTO> listarTodos() {
+        List<Produto> produtos = repository.listarTodos();
+        LOG.info("listarTodos : {}", produtos.size());
+        return mapper.toDTOList(produtos);
     }
 
-    public Produto buscarPorId(Long id) {
+    public ProdutoResponseDTO buscarPorId(final Long id) {
+        LOG.info("buscarPorId : {}", id);
         return repository.buscarPorId(id)
+                .map(mapper::toDTO)
                 .orElseThrow(() -> new BusinessNotException("Produto não encontrado com o ID: " + id));
     }
 
     @Transactional
-    public Produto salvar(Produto produto) {
-        Objects.requireNonNull(produto, "Produto não pode ser nulo");
-        return repository.salvar(produto);
+    public ProdutoResponseDTO salvar(final ProdutoRequestDTO produtoDTO) {
+        Objects.requireNonNull(produtoDTO, "Produto não pode ser nulo");
+        Produto produto = mapper.toEntity(produtoDTO);
+        Produto produtoSalvo = repository.salvar(produto);
+        LOG.info("salvar : {}", produtoSalvo);
+        return mapper.toDTO(produtoSalvo);
+    }
+
+    @Transactional
+    public ProdutoResponseDTO atualizar(Long id, ProdutoRequestDTO produtoDTO) {
+        Produto produto = repository.buscarPorId(id)
+                .orElseThrow(() -> new BusinessNotException("Produto não encontrado com o ID: " + id));
+
+        mapper.fromDTO(produtoDTO, produto);
+        Produto produtoAtualizado = repository.salvar(produto);
+        LOG.info("atualizar : {}", produtoAtualizado);
+        return mapper.toDTO(produtoAtualizado);
     }
 
     @Transactional
     public void remover(Long id) {
-        Produto produto = buscarPorId(id);
-        repository.remover(produto.getId());
+        LOG.info("remover : {}", id);
+        if (!repository.existsById(id)) {
+            throw new BusinessNotException("Produto não encontrado com o ID: " + id);
+        }
+        repository.remover(id);
     }
 }

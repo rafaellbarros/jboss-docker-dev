@@ -1,6 +1,7 @@
 package com.github.rafaellbarros.resource;
 
-import com.github.rafaellbarros.model.Produto;
+import com.github.rafaellbarros.dto.ProdutoRequestDTO;
+import com.github.rafaellbarros.dto.ProdutoResponseDTO;
 import com.github.rafaellbarros.response.StandardResponses;
 import com.github.rafaellbarros.service.ProdutoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,6 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import javax.inject.Inject;
+import javax.validation.Valid;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -35,8 +37,8 @@ public class ProdutoResource {
             description = "Retorna uma lista com todos os produtos cadastrados")
     @ApiResponse(responseCode = "200",
             description = "Lista de produtos retornada com sucesso",
-            content = @Content(schema = @Schema(implementation = Produto.class)))
-    public List<Produto> listarTodos() {
+            content = @Content(schema = @Schema(implementation = ProdutoResponseDTO.class)))
+    public List<ProdutoResponseDTO> listarTodos() {
         return service.listarTodos();
     }
 
@@ -46,7 +48,7 @@ public class ProdutoResource {
             description = "Retorna um produto específico baseado em seu ID")
     @ApiResponse(responseCode = "200",
             description = "Produto encontrado",
-            content = @Content(schema = @Schema(implementation = Produto.class)))
+            content = @Content(schema = @Schema(implementation = ProdutoResponseDTO.class)))
     public Response buscarPorId(
             @Parameter(description = "ID do produto a ser buscado", required = true)
             @PathParam("id") Long id) {
@@ -55,29 +57,20 @@ public class ProdutoResource {
     }
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Operation(
-            summary = "Criar novo produto",
-            description = "Cadastra um novo produto no sistema"
-    )
-    @ApiResponse(
-            responseCode = "201",
+    @Operation(summary = "Criar novo produto")
+    @ApiResponse(responseCode = "201",
             description = "Produto criado com sucesso",
-            content = @Content(schema = @Schema(implementation = Produto.class))
-    )
-    @ApiResponse(
-            responseCode = "400",
-            description = "Dados do produto inválidos"
-    )
+            content = @Content(schema = @Schema(implementation = ProdutoResponseDTO.class)))
+    @ApiResponse(responseCode = "400",
+            description = "Dados inválidos")
     public Response criar(
             @RequestBody(
-                    description = "Dados do produto a ser criado",
+                    description = "Dados do produto",
                     required = true,
-                    content = @Content(schema = @Schema(implementation = Produto.class))
-            )
-            Produto produto
-    ) {
-        var produtoSalvo = service.salvar(produto);
+                    content = @Content(schema = @Schema(implementation = ProdutoRequestDTO.class)))
+            @Valid ProdutoRequestDTO produtoDTO) {
+
+        var produtoSalvo = service.salvar(produtoDTO);
         return Response.created(URI.create("/produtos/" + produtoSalvo.getId()))
                 .entity(produtoSalvo)
                 .build();
@@ -85,38 +78,39 @@ public class ProdutoResource {
 
     @PUT
     @Path("/{id}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Atualizar produto",
-            description = "Atualiza os dados de um produto existente")
+    @Operation(summary = "Atualizar produto")
     @ApiResponse(responseCode = "200",
-            description = "Produto atualizado com sucesso",
-            content = @Content(schema = @Schema(implementation = Produto.class)))
+            description = "Produto atualizado",
+            content = @Content(schema = @Schema(implementation = ProdutoResponseDTO.class)))
     @ApiResponse(responseCode = "400",
-            description = "Dados do produto inválidos")
+            description = "Dados inválidos")
+    @ApiResponse(responseCode = "404",
+            description = "Produto não encontrado")
     public Response atualizar(
-            @Parameter(description = "ID do produto a ser atualizado", required = true)
+            @Parameter(description = "ID do produto", required = true)
             @PathParam("id") Long id,
+
             @RequestBody(
                     description = "Dados atualizados do produto",
                     required = true,
-                    content = @Content(schema = @Schema(implementation = Produto.class))
-            )
-            Produto produto) {
+                    content = @Content(schema = @Schema(implementation = ProdutoRequestDTO.class)))
+            @Valid ProdutoRequestDTO produtoDTO) {
 
-        produto.setId(id);
-        var produtoAtualizado = service.salvar(produto);
+        var produtoAtualizado = service.atualizar(id, produtoDTO);
         return Response.ok(produtoAtualizado).build();
     }
 
     @DELETE
     @Path("/{id}")
-    @Operation(summary = "Remover produto",
-            description = "Remove um produto do sistema")
+    @Operation(summary = "Remover produto")
     @ApiResponse(responseCode = "204",
-            description = "Produto removido com sucesso")
+            description = "Produto removido")
+    @ApiResponse(responseCode = "404",
+            description = "Produto não encontrado")
     public Response remover(
-            @Parameter(description = "ID do produto a ser removido", required = true)
+            @Parameter(description = "ID do produto", required = true)
             @PathParam("id") Long id) {
+
         service.remover(id);
         return Response.noContent().build();
     }

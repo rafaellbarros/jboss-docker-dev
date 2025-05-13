@@ -34,4 +34,8 @@ public class ProdutoRepository {
     public void remover(Long id) {
         buscarPorId(id).ifPresent(em::remove);
     }
+
+    public boolean existsById(Long id) {
+        return buscarPorId(id).isPresent();
+    }
 }

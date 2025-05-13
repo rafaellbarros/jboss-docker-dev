@@ -30,7 +30,7 @@ public class BusinessNotExceptionMapper implements ExceptionMapper<BusinessNotEx
         String requestId = MDC.get("requestId");
         String path = uriInfo.getPath();
 
-        LOG.info("Resource Not Found - RequestId: {}, Path: {}, Method: {}, Details: {}",
+        LOG.warn("Resource Not Found - RequestId: {}, Path: {}, Method: {}, Details: {}",
                 requestId, path, request.getMethod(), exception.getMessage());
 
         ErrorResponse errorResponse = ErrorResponse.builder(

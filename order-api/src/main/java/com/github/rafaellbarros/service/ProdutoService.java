@@ -1,6 +1,6 @@
 package com.github.rafaellbarros.service;
 
-import com.github.rafaellbarros.exception.BusinessException;
+import com.github.rafaellbarros.exception.BusinessNotException;
 import com.github.rafaellbarros.model.Produto;
 import com.github.rafaellbarros.repository.ProdutoRepository;
 
@@ -22,7 +22,7 @@ public class ProdutoService {
 
     public Produto buscarPorId(Long id) {
         return repository.buscarPorId(id)
-                .orElseThrow(() -> new BusinessException("Produto não encontrado com o ID: " + id));
+                .orElseThrow(() -> new BusinessNotException("Produto não encontrado com o ID: " + id));
     }
 
     @Transactional

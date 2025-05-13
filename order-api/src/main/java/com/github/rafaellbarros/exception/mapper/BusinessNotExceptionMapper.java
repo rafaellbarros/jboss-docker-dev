@@ -1,10 +1,11 @@
 package com.github.rafaellbarros.exception.mapper;
 
+
+import com.github.rafaellbarros.exception.BusinessNotException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
@@ -13,9 +14,10 @@ import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 import java.util.Collections;
 
+
 @Provider
-public class BadRequestExceptionMapper implements ExceptionMapper<BadRequestException> {
-    private static final Logger LOG = LoggerFactory.getLogger(BadRequestExceptionMapper.class);
+public class BusinessNotExceptionMapper implements ExceptionMapper<BusinessNotException> {
+    private static final Logger LOG = LoggerFactory.getLogger(BusinessNotExceptionMapper.class);
 
     @Context
     private UriInfo uriInfo;
@@ -24,26 +26,25 @@ public class BadRequestExceptionMapper implements ExceptionMapper<BadRequestExce
     private Request request;
 
     @Override
-    public Response toResponse(BadRequestException exception) {
+    public Response toResponse(BusinessNotException exception) {
         String requestId = MDC.get("requestId");
         String path = uriInfo.getPath();
 
-        LOG.warn("Bad Request - RequestId: {}, Path: {}, Method: {}, Error: {}",
+        LOG.info("Resource Not Found - RequestId: {}, Path: {}, Method: {}, Details: {}",
                 requestId, path, request.getMethod(), exception.getMessage());
 
         ErrorResponse errorResponse = ErrorResponse.builder(
-                        Response.Status.BAD_REQUEST.getStatusCode(),
-                        "Bad Request",
-                        "Invalid request data. Please check your input.")
+                        Response.Status.NOT_FOUND.getStatusCode(),
+                        "Not Found",
+                        exception.getMessage())  // Usando a mensagem da exceção
                 .path(path)
                 .method(request.getMethod())
                 .requestId(requestId)
-                .details(exception.getMessage() != null ?
-                        Collections.singletonMap("validation", exception.getMessage()) :
-                        Collections.singletonMap("validation", "Input validation failed"))
+                // Removendo os details ou usando um valor padrão
+                .details(Collections.singletonMap("resource", "Not found"))
                 .build();
 
-        return Response.status(Response.Status.BAD_REQUEST)
+        return Response.status(Response.Status.NOT_FOUND)
                 .entity(errorResponse)
                 .type("application/json")
                 .build();

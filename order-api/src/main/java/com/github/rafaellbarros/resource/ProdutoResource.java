@@ -1,6 +1,7 @@
 package com.github.rafaellbarros.resource;
 
 import com.github.rafaellbarros.model.Produto;
+import com.github.rafaellbarros.response.StandardResponses;
 import com.github.rafaellbarros.service.ProdutoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -17,10 +18,12 @@ import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.util.List;
 
+
 @Path("/produtos")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Produtos", description = "Operações relacionadas a produtos")
+@StandardResponses
 public class ProdutoResource {
 
     @Inject
@@ -44,8 +47,6 @@ public class ProdutoResource {
     @ApiResponse(responseCode = "200",
             description = "Produto encontrado",
             content = @Content(schema = @Schema(implementation = Produto.class)))
-    @ApiResponse(responseCode = "404",
-            description = "Produto não encontrado")
     public Response buscarPorId(
             @Parameter(description = "ID do produto a ser buscado", required = true)
             @PathParam("id") Long id) {
@@ -92,8 +93,6 @@ public class ProdutoResource {
             content = @Content(schema = @Schema(implementation = Produto.class)))
     @ApiResponse(responseCode = "400",
             description = "Dados do produto inválidos")
-    @ApiResponse(responseCode = "404",
-            description = "Produto não encontrado")
     public Response atualizar(
             @Parameter(description = "ID do produto a ser atualizado", required = true)
             @PathParam("id") Long id,
@@ -115,8 +114,6 @@ public class ProdutoResource {
             description = "Remove um produto do sistema")
     @ApiResponse(responseCode = "204",
             description = "Produto removido com sucesso")
-    @ApiResponse(responseCode = "404",
-            description = "Produto não encontrado")
     public Response remover(
             @Parameter(description = "ID do produto a ser removido", required = true)
             @PathParam("id") Long id) {

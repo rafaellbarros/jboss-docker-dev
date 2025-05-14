@@ -4,14 +4,14 @@ import com.github.rafaellbarros.dto.ProdutoFiltroDTO;
 import com.github.rafaellbarros.model.Produto;
 import com.github.rafaellbarros.page.Page;
 import com.github.rafaellbarros.page.Pageable;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.persistence.TypedQuery;
-import java.util.HashMap;
+import javax.persistence.criteria.*;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @ApplicationScoped
@@ -34,59 +34,26 @@ public class ProdutoRepository {
     }
 
     public Page<Produto> pesquisarComFiltros(ProdutoFiltroDTO filtro, Pageable pageable) {
-        // Construção da query dinâmica
-        StringBuilder jpql = new StringBuilder("SELECT p FROM Produto p WHERE 1=1");
-        Map<String, Object> parametros = new HashMap<>();
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<Produto> cq = cb.createQuery(Produto.class);
+        Root<Produto> produto = cq.from(Produto.class);
 
         // Aplicar filtros
-        if (filtro.getNome() != null && !filtro.getNome().isEmpty()) {
-            jpql.append(" AND LOWER(p.nome) LIKE LOWER(:nome)");
-            parametros.put("nome", "%" + filtro.getNome() + "%");
-        }
+        List<Predicate> predicates = construirPredicados(filtro, cb, produto);
 
-        if (filtro.getDescricao() != null && !filtro.getDescricao().isEmpty()) {
-            jpql.append(" AND LOWER(p.descricao) LIKE LOWER(:descricao)");
-            parametros.put("descricao", "%" + filtro.getDescricao() + "%");
-        }
+        // Adicionar predicados à query
+        cq.where(predicates.toArray(new Predicate[0]));
 
-        if (filtro.getPrecoMin() != null) {
-            jpql.append(" AND p.preco >= :precoMin");
-            parametros.put("precoMin", filtro.getPrecoMin());
-        }
+        // Aplicar ordenação
+        aplicarOrdenacao(pageable, cb, cq, produto);
 
-        if (filtro.getPrecoMax() != null) {
-            jpql.append(" AND p.preco <= :precoMax");
-            parametros.put("precoMax", filtro.getPrecoMax());
-        }
+        // Executar query paginada
+        List<Produto> resultados = executarQueryPaginada(cq, pageable);
 
-        // Ordenação (apenas para a query principal)
-        String jpqlOrdenacao = "";
-        if (pageable.hasOrdination()) {
-            jpqlOrdenacao = " ORDER BY p." + pageable.getOrdination() + " " + pageable.getDirection().name();
-        }
+        // Contar total de resultados
+        long total = contarTotalResultados(filtro);
 
-        // Criar e executar query para os resultados
-        TypedQuery<Produto> query = em.createQuery(jpql.toString() + jpqlOrdenacao, Produto.class);
-        parametros.forEach(query::setParameter);
-
-        query.setFirstResult(pageable.getFirstResult());
-        query.setMaxResults(pageable.getSize());
-
-        List<Produto> content = query.getResultList();
-
-        // Criar query para contar o total de resultados (sem ordenação)
-        String countJpql = jpql.toString().replace("SELECT p FROM Produto p", "SELECT COUNT(p) FROM Produto p");
-        TypedQuery<Long> countQuery = em.createQuery(countJpql, Long.class);
-        parametros.forEach(countQuery::setParameter);
-
-        Long total = countQuery.getSingleResult();
-
-        return new Page<>(
-                content,
-                pageable.getPage(),
-                pageable.getSize(),
-                total
-        );
+        return new Page<>(resultados, pageable.getPage(), pageable.getSize(), total);
     }
 
     public Page<Produto> listarTodosPaginado(Pageable pageable) {
@@ -103,5 +70,72 @@ public class ProdutoRepository {
 
     public boolean existsById(Long id) {
         return buscarPorId(id).isPresent();
+    }
+
+    private List<Predicate> construirPredicados(ProdutoFiltroDTO filtro, CriteriaBuilder cb, Root<Produto> produto) {
+        List<Predicate> predicates = new ArrayList<>();
+
+        if (StringUtils.isNotBlank(filtro.getNome())) {
+            predicates.add(cb.like(
+                    cb.lower(produto.get("nome")),
+                    "%" + filtro.getNome().toLowerCase() + "%"
+            ));
+        }
+
+        if (StringUtils.isNotBlank(filtro.getDescricao())) {
+            predicates.add(cb.like(
+                    cb.lower(produto.get("descricao")),
+                    "%" + filtro.getDescricao().toLowerCase() + "%"
+            ));
+        }
+
+        if (filtro.getPrecoMin() != null) {
+            predicates.add(cb.greaterThanOrEqualTo(
+                    produto.get("preco"),
+                    filtro.getPrecoMin()
+            ));
+        }
+
+        if (filtro.getPrecoMax() != null) {
+            predicates.add(cb.lessThanOrEqualTo(
+                    produto.get("preco"),
+                    filtro.getPrecoMax()
+            ));
+        }
+
+        return predicates;
+    }
+
+    private void aplicarOrdenacao(Pageable pageable, CriteriaBuilder cb,
+                                  CriteriaQuery<Produto> cq, Root<Produto> produto) {
+        if (pageable.hasOrdination()) {
+            Path<Object> campoOrdenacao = produto.get(pageable.getOrdination());
+            Order ordem = pageable.isAscending()
+                    ? cb.asc(campoOrdenacao)
+                    : cb.desc(campoOrdenacao);
+            cq.orderBy(ordem);
+        }
+    }
+
+    private List<Produto> executarQueryPaginada(CriteriaQuery<Produto> cq, Pageable pageable) {
+        return em.createQuery(cq)
+                .setFirstResult(pageable.getFirstResult())
+                .setMaxResults(pageable.getSize())
+                .getResultList();
+    }
+
+    private long contarTotalResultados(ProdutoFiltroDTO filtro) {
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
+        Root<Produto> produto = countQuery.from(Produto.class);
+
+        countQuery.select(cb.count(produto));
+
+        List<Predicate> predicates = construirPredicados(filtro, cb, produto);
+        if (!predicates.isEmpty()) {
+            countQuery.where(predicates.toArray(new Predicate[0]));
+        }
+
+        return em.createQuery(countQuery).getSingleResult();
     }
 }

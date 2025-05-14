@@ -7,10 +7,10 @@ public class Pageable {
     private static final int DEFAULT_SIZE = 10;
     private static final SortDirection DEFAULT_DIRECTION = SortDirection.ASC;
 
-    private int page;
-    private int size;
-    private String ordination;
-    private SortDirection direction;
+    private final int page;
+    private final int size;
+    private final String ordination;
+    private final SortDirection direction;
 
     // Construtor padrão com valores default
     public Pageable() {
@@ -19,8 +19,8 @@ public class Pageable {
 
     // Construtor completo
     public Pageable(int page, int size, String ordination, SortDirection direction) {
-        this.page = Math.max(page, DEFAULT_PAGE); // Garante que não seja negativo
-        this.size = size <= 0 ? DEFAULT_SIZE : size; // Garante tamanho mínimo
+        this.page = Math.max(page, DEFAULT_PAGE);
+        this.size = size <= 0 ? DEFAULT_SIZE : size;
         this.ordination = ordination;
         this.direction = Objects.requireNonNullElse(direction, DEFAULT_DIRECTION);
     }
@@ -52,6 +52,11 @@ public class Pageable {
         return direction;
     }
 
+    // Novo método para verificar se a ordenação é ascendente
+    public boolean isAscending() {
+        return SortDirection.ASC.equals(direction);
+    }
+
     // Calcula o offset para a consulta SQL/JQL
     public int getFirstResult() {
         return page * size;
@@ -62,7 +67,7 @@ public class Pageable {
         return ordination != null && !ordination.trim().isEmpty();
     }
 
-    // Builder pattern opcional (se quiser usar)
+    // Builder pattern
     public static Builder builder() {
         return new Builder();
     }
